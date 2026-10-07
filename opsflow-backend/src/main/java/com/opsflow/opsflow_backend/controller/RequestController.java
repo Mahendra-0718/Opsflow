@@ -1,18 +1,12 @@
 package com.opsflow.opsflow_backend.controller;
 
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.opsflow.opsflow_backend.entity.Request;
 import com.opsflow.opsflow_backend.service.RequestService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/requests")
@@ -45,6 +39,34 @@ public class RequestController {
 
         return ResponseEntity.ok(
                 requestService.getMyRequests(email)
+        );
+    }
+
+    @GetMapping("/assigned")
+    public ResponseEntity<List<Request>> getAssignedRequests(
+            Authentication authentication) {
+
+        String email = authentication.getName();
+
+        return ResponseEntity.ok(
+                requestService.getAssignedRequests(email)
+        );
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<Request> updateAssignedRequestStatus(
+            @PathVariable Long id,
+            @RequestParam String status,
+            Authentication authentication) {
+
+        String email = authentication.getName();
+
+        return ResponseEntity.ok(
+                requestService.updateAssignedRequestStatus(
+                        id,
+                        status,
+                        email
+                )
         );
     }
 }

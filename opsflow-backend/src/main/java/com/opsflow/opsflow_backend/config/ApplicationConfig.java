@@ -5,13 +5,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Collections;
 
 @Configuration
 public class ApplicationConfig {
@@ -24,22 +21,31 @@ public class ApplicationConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
+
         return email -> userRepository.findByEmail(email)
-                .map(user -> new org.springframework.security.core.userdetails.User(
-                        user.getEmail(),
-                        user.getPassword(),
-                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
-                ))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+                .map(user -> org.springframework.security.core.userdetails.User
+                        .withUsername(user.getEmail())
+                        .password(user.getPassword())
+                        .roles(user.getRole().name())
+                        .disabled(!user.isActive())
+                        .build()
+                )
+                .orElseThrow(() ->
+                        new UsernameNotFoundException(
+                                "User not found with email: " + email
+                        ));
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
+
         return config.getAuthenticationManager();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+
         return new BCryptPasswordEncoder();
     }
 }

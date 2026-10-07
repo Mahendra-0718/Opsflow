@@ -35,9 +35,15 @@ public class Request {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    // User who created the request
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    // User assigned to handle the request
+    @ManyToOne
+    @JoinColumn(name = "assigned_to")
+    private User assignedTo;
 
     public Request() {
     }
@@ -105,5 +111,13 @@ public class Request {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public User getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(User assignedTo) {
+        this.assignedTo = assignedTo;
     }
 }
