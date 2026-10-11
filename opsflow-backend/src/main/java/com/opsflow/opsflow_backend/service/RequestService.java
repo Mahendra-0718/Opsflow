@@ -1,3 +1,4 @@
+
 package com.opsflow.opsflow_backend.service;
 
 import com.opsflow.opsflow_backend.entity.Request;
@@ -22,18 +23,57 @@ public class RequestService {
         this.userRepository = userRepository;
     }
 
+    // Create a new request with backend validation
     public Request createRequest(String email, Request request) {
 
+        // Validate title
+        if (request.getTitle() == null ||
+                request.getTitle().trim().isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "Title is required"
+            );
+        }
+
+        // Validate description
+        if (request.getDescription() == null ||
+                request.getDescription().trim().isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "Description is required"
+            );
+        }
+
+        // Validate priority
+        String priority = request.getPriority();
+
+        if (priority == null ||
+                (!priority.equals("LOW") &&
+                 !priority.equals("MEDIUM") &&
+                 !priority.equals("HIGH") &&
+                 !priority.equals("URGENT"))) {
+
+            throw new IllegalArgumentException(
+                    "Priority must be LOW, MEDIUM, HIGH, or URGENT"
+            );
+        }
+
+        // Find the logged-in user
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
 
+        // Set validated values and trusted server-side fields
+        request.setTitle(request.getTitle().trim());
+        request.setDescription(request.getDescription().trim());
         request.setUser(user);
         request.setStatus("OPEN");
 
+        // Save the request
         return requestRepository.save(request);
     }
 
+    // Get requests created by the logged-in user
     public List<Request> getMyRequests(String email) {
 
         User user = userRepository.findByEmail(email)
@@ -44,6 +84,7 @@ public class RequestService {
                 .findByUserOrderByCreatedAtDesc(user);
     }
 
+    // Get requests assigned to the logged-in user
     public List<Request> getAssignedRequests(String email) {
 
         User user = userRepository.findByEmail(email)
@@ -54,6 +95,7 @@ public class RequestService {
                 .findByAssignedToOrderByCreatedAtDesc(user);
     }
 
+    // Update the status of a request assigned to an employee
     public Request updateAssignedRequestStatus(
             Long requestId,
             String status,
@@ -67,21 +109,22 @@ public class RequestService {
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
 
-        // Make sure this employee is actually assigned to the request
+        // Ensure this employee is assigned to the request
         if (request.getAssignedTo() == null ||
-                !request.getAssignedTo().getId().equals(employee.getId())) {
+                !request.getAssignedTo().getId()
+                        .equals(employee.getId())) {
 
             throw new RuntimeException(
                     "You are not assigned to this request"
             );
         }
 
-        // Allow only these statuses
-        if (!status.equals("OPEN") &&
-                !status.equals("IN_PROGRESS") &&
-                !status.equals("RESOLVED")) {
+        // Allow only valid statuses
+        if (!"OPEN".equals(status) &&
+                !"IN_PROGRESS".equals(status) &&
+                !"RESOLVED".equals(status)) {
 
-            throw new RuntimeException(
+            throw new IllegalArgumentException(
                     "Invalid status"
             );
         }
